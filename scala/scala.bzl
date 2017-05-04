@@ -281,12 +281,15 @@ def _build_deployable(ctx, jars):
         progress_message="scala deployable %s" % ctx.label,
         arguments=args)
 
+
 def write_manifest(ctx):
     # TODO(bazel-team): I don't think this classpath is what you want
     manifest = "Class-Path: \n"
+    if getattr(ctx.attr, "class_path",""):
+        # TODO: deal with lines longer than 72 char
+        manifest = "Class-Path: %s\n" % ctx.attr.class_path
     if getattr(ctx.attr, "main_class", ""):
         manifest += "Main-Class: %s\n" % ctx.attr.main_class
-
     ctx.file_action(
         output=ctx.outputs.manifest,
         content=manifest)
@@ -614,6 +617,7 @@ scala_library = rule(
   implementation=_scala_library_impl,
   attrs={
       "main_class": attr.string(),
+      "class_path": attr.string(),
       "exports": attr.label_list(allow_files=False),
       } + _implicit_deps + _common_attrs,
   outputs={
