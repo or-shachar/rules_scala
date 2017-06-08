@@ -108,10 +108,9 @@ TIMOUT=60
 
 run_test_ci() {
   # spawns the test to new process
-  echo $@
   local TEST_ARG=$@
   local log_file=output_$$.log
-
+  echo "running test $TEST_ARG"
   $TEST_ARG &>$log_file &
   local cmd_pid=$!
   SECONDS=0
