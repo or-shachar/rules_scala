@@ -100,11 +100,64 @@ test_benchmark_jmh() {
   fi
   exit $RESPONSE_CODE
 }
+
 NC='\033[0m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+TIMOUT=60
 
-function run_test() {
+run_test_ci() {
+  # spawns the test to new process
+  echo $@
+  local cmd=$@
+  local log_file=output_$$.log
+
+  $cmd &>$log_file &
+  local cmd_pid=$!
+
+  jigger $! $TIMOUT $cmd &
+  local jigger_pid=$!
+  local result
+
+  {
+    wait $cmd_pid 2>/dev/null
+    result=$?
+    ps -p$jigger_pid &>/dev/null && kill $jigger_pid
+  } || return 1
+
+  if [ $result -eq 0 ]; then
+    echo -e "\n${GREEN}The command \"$cmd\" exited with $result.${NC}"
+  else
+    echo -e "\n${RED}The command \"$cmd\" exited with $result.${NC}"
+    echo -e "\nLog:\n"
+    cat $log_file
+  fi
+  return $result
+}
+
+jigger() {
+  # makes sure something is printed to stdout while process is running
+  local cmd_pid=$1
+  shift
+  local timeout=$1 # in minutes
+  shift
+  local count=0
+
+  # clear the line
+  echo -e "\n"
+
+  while [ $count -lt $timeout ]; do
+    count=$(($count + 1))
+    echo -ne "$(date): Still running: $@\r"
+    sleep 60
+  done
+
+  echo -e "\n${ANSI_RED}Timeout (${timeout} minutes) reached. Terminating \"$@\"${ANSI_RESET}\n"
+  kill -9 $cmd_pid
+}
+
+run_test_local() {
+  # runs the tests locally
   set +e
   SECONDS=0
   TEST_ARG=$@
@@ -226,33 +279,38 @@ scala_test_test_filters() {
     fi
 }
 
+if [ "$1" != "ci" ]; then
+  runner="run_test_local"
+else
+  runner="run_test_ci"
+fi
 
-run_test bazel build test/...
-run_test bazel test test/...
-run_test bazel run test/src/main/scala/scala/test/twitter_scrooge:justscrooges
-run_test bazel run test:JavaBinary
-run_test bazel run test:JavaBinary2
-run_test bazel run test:MixJavaScalaLibBinary
-run_test bazel run test:MixJavaScalaSrcjarLibBinary
-run_test bazel run test:ScalaBinary
-run_test bazel run test:ScalaLibBinary
-run_test test_disappearing_class
-run_test find -L ./bazel-testlogs -iname "*.xml"
-run_test xmllint_test
-run_test test_build_is_identical
-run_test test_transitive_deps
-run_test test_scala_library_suite
-run_test test_repl
-run_test bazel run test:JavaOnlySources
-run_test test_benchmark_jmh
-run_test multiple_junit_suffixes
-run_test multiple_junit_prefixes
-run_test test_scala_junit_test_can_fail
-run_test junit_generates_xml_logs
-run_test multiple_junit_patterns
-run_test test_junit_test_must_have_prefix_or_suffix
-run_test test_junit_test_errors_when_no_tests_found
-run_test scala_library_jar_without_srcs_must_include_direct_file_resources
-run_test scala_library_jar_without_srcs_must_include_filegroup_resources
-run_test bazel run test/src/main/scala/scala/test/large_classpath:largeClasspath
-run_test scala_test_test_filters
+$runner bazel build test/...
+$runner bazel test test/...
+$runner bazel run test/src/main/scala/scala/test/twitter_scrooge:justscrooges
+$runner bazel run test:JavaBinary
+$runner bazel run test:JavaBinary2
+$runner bazel run test:MixJavaScalaLibBinary
+$runner bazel run test:MixJavaScalaSrcjarLibBinary
+$runner bazel run test:ScalaBinary
+$runner bazel run test:ScalaLibBinary
+$runner test_disappearing_class
+$runner find -L ./bazel-testlogs -iname "*.xml"
+$runner xmllint_test
+$runner test_build_is_identical
+$runner test_transitive_deps
+$runner test_scala_library_suite
+$runner test_repl
+$runner bazel run test:JavaOnlySources
+$runner test_benchmark_jmh
+$runner multiple_junit_suffixes
+$runner multiple_junit_prefixes
+$runner test_scala_junit_test_can_fail
+$runner junit_generates_xml_logs
+$runner multiple_junit_patterns
+$runner test_junit_test_must_have_prefix_or_suffix
+$runner test_junit_test_errors_when_no_tests_found
+$runner scala_library_jar_without_srcs_must_include_direct_file_resources
+$runner scala_library_jar_without_srcs_must_include_filegroup_resources
+$runner bazel run test/src/main/scala/scala/test/large_classpath:largeClasspath
+$runner scala_test_test_filters
