@@ -109,13 +109,13 @@ TIMOUT=60
 run_test_ci() {
   # spawns the test to new process
   echo $@
-  local cmd=$@
+  local TEST_ARG=$@
   local log_file=output_$$.log
 
-  $cmd &>$log_file &
+  $TEST_ARG &>$log_file &
   local cmd_pid=$!
-
-  jigger $! $TIMOUT $cmd &
+  SECONDS=0
+  jigger $! $TIMOUT $TEST_ARG &
   local jigger_pid=$!
   local result
 
@@ -124,13 +124,14 @@ run_test_ci() {
     result=$?
     ps -p$jigger_pid &>/dev/null && kill $jigger_pid
   } || return 1
-
+  
+  DURATION=$SECONDS
   if [ $result -eq 0 ]; then
-    echo -e "\n${GREEN}The command \"$cmd\" exited with $result.${NC}"
+    echo -e "\n${GREEN}Test \"$TEST_ARG\" successful ($DURATION sec) $NC"
   else
-    echo -e "\n${RED}The command \"$cmd\" exited with $result.${NC}"
     echo -e "\nLog:\n"
     cat $log_file
+    echo -e "\n${RED}Test \"$TEST_ARG\" failed $NC ($DURATION sec) $NC"
   fi
   return $result
 }
@@ -148,11 +149,11 @@ jigger() {
 
   while [ $count -lt $timeout ]; do
     count=$(($count + 1))
-    echo -ne "$(date): Still running: $@\r"
+    echo -ne "Still running: \"$@\"...\r"
     sleep 60
   done
 
-  echo -e "\n${ANSI_RED}Timeout (${timeout} minutes) reached. Terminating \"$@\"${ANSI_RESET}\n"
+  echo -e "\n${RED}Timeout (${timeout} minutes) reached. Terminating \"$@\"${NC}\n"
   kill -9 $cmd_pid
 }
 
@@ -166,10 +167,11 @@ run_test_local() {
   RESPONSE_CODE=$?
   DURATION=$SECONDS
   if [ $RESPONSE_CODE -eq 0 ]; then
-    echo -e "${GREEN} Test $TEST_ARG successful ($DURATION sec) $NC"
+    echo -e "${GREEN} Test \"$TEST_ARG\" successful ($DURATION sec) $NC"
   else
+    echo -e "\nLog:\n"
     echo "$RES"
-    echo -e "${RED} Test $TEST_ARG failed $NC ($DURATION sec) $NC"
+    echo -e "${RED} Test \"$TEST_ARG\" failed $NC ($DURATION sec) $NC"
     exit $RESPONSE_CODE
   fi
 }
