@@ -112,16 +112,16 @@ run_test_ci() {
   local log_file=output_$$.log
   echo "running test $TEST_ARG"
   $TEST_ARG &>$log_file &
-  local cmd_pid=$!
+  local test_pid=$!
   SECONDS=0
-  jigger $! $TIMOUT $TEST_ARG &
-  local jigger_pid=$!
+  test_pulse_printer $! $TIMOUT $TEST_ARG &
+  local pulse_printer_pid=$!
   local result
-
+  
   {
-    wait $cmd_pid 2>/dev/null
+    wait $test_pid 2>/dev/null
     result=$?
-    ps -p$jigger_pid &>/dev/null && kill $jigger_pid
+    kill $pulse_printer_pid && wait $pulse_printer_pid 2>/dev/null
   } || return 1
   
   DURATION=$SECONDS
@@ -135,9 +135,9 @@ run_test_ci() {
   return $result
 }
 
-jigger() {
-  # makes sure something is printed to stdout while process is running
-  local cmd_pid=$1
+test_pulse_printer() {
+  # makes sure something is printed to stdout while test is running
+  local test_pid=$1
   shift
   local timeout=$1 # in minutes
   shift
@@ -148,12 +148,12 @@ jigger() {
 
   while [ $count -lt $timeout ]; do
     count=$(($count + 1))
-    echo -ne "Still running: \"$@\"...\r"
+    echo -ne "Still running: \"$@\"\r"
     sleep 60
   done
 
   echo -e "\n${RED}Timeout (${timeout} minutes) reached. Terminating \"$@\"${NC}\n"
-  kill -9 $cmd_pid
+  kill -9 $test_pid
 }
 
 run_test_local() {
