@@ -117,11 +117,11 @@ run_test_ci() {
   test_pulse_printer $! $TIMOUT $TEST_ARG &
   local pulse_printer_pid=$!
   local result
-  
+
   {
     wait $test_pid 2>/dev/null
     result=$?
-    kill $pulse_printer_pid && wait $pulse_printer_pid 2>/dev/null
+    kill $pulse_printer_pid && wait $pulse_printer_pid 2>/dev/null || true
   } || return 1
   
   DURATION=$SECONDS
