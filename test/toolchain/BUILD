@@ -12,5 +12,6 @@ scala_library(
 bazel_java_integration_test(
     name = "ScalaToolchainTestRunner",
     srcs = [],
+    test_class = "scala.test.toolchain.ScalaToolchainTest",
     runtime_deps = [":toolchain"],
 )
