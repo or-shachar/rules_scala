@@ -2,6 +2,12 @@ licenses(["notice"])  # 3-clause BSD
 
 load("//scala:scala.bzl", "scala_library", "scala_library_for_plugin_bootstrapping")
 
+filegroup(
+    name = "all_files",
+    srcs = glob(["*"]),
+    visibility = ["//visibility:public"]
+)
+
 scala_library_for_plugin_bootstrapping(
     name = "dependency_analyzer",
     srcs = ["io/bazel/rulesscala/dependencyanalyzer/DependencyAnalyzer.scala",

@@ -1,5 +1,10 @@
 load("//scala:scala_toolchain.bzl", "scala_toolchain")
 
+filegroup(
+    name = "all_files",
+    srcs = glob(["*"]),
+    visibility = ["//visibility:public"]
+)
 #call scala toolchain
 scala_toolchain(
       name = 'scala_toolchain_impl',

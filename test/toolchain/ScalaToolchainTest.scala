@@ -1,8 +1,11 @@
 package scala.test.toolchain
 
+import java.nio.file.{Files, Paths}
+
 import build.bazel.tests.integration.BazelBaseTestCase
 import org.specs2.mutable.{Before, SpecificationWithJUnit}
 import org.specs2.specification.{BeforeAll, Scope}
+
 import scala.collection.JavaConverters._
 
 //noinspection TypeAnnotation
@@ -10,6 +13,12 @@ class ScalaToolchainTest extends SpecificationWithJUnit with BeforeAll {
 
   trait ctx extends Scope with Before {
     val bazelDriver = new BazelBaseTestCase {
+      def add = addExter
+      def pubCopyFromRunfiles(from: String, to: String) = copyFromRunfiles(from, to)
+      def pubCopyFolderFromRunfiles(folderName: String) = {
+        val fromPath = Paths.get(folderName)
+        Files.list(fromPath).iterator().asScala.map(folderName + "/" + _.getFileName.toString).foreach(file=>{copyFromRunfiles("io_bazel_rules_scala/"+file,file)})
+      }
       def writeFile(path: String, content: String) = scratchFile(path, content)
 
       def runBazel(args: String*) = bazel(args.asJava)
@@ -30,10 +39,6 @@ class ScalaToolchainTest extends SpecificationWithJUnit with BeforeAll {
              |$toolchainList
              |)
              |
-             |$localRepositories
-             |
-             |load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
-             |scala_repositories()
       """.stripMargin)
       }
     }
@@ -53,8 +58,8 @@ class ScalaToolchainTest extends SpecificationWithJUnit with BeforeAll {
           |  }
           |}""".stripMargin)
       bazelDriver.writeFile("BUILD",
-        """load("@io_bazel_rules_scala//scala:scala_toolchain.bzl", "scala_toolchain")
-          |load("@io_bazel_rules_scala//scala:scala.bzl", "scala_library")
+        """load("//scala:scala_toolchain.bzl", "scala_toolchain")
+          |load("//scala:scala.bzl", "scala_library")
           |
           |scala_toolchain(
           |    name = "failing_scala_toolchain",
@@ -68,8 +73,13 @@ class ScalaToolchainTest extends SpecificationWithJUnit with BeforeAll {
           |
         """.
           stripMargin)
+      bazelDriver.pubCopyFolderFromRunfiles("scala")
+      bazelDriver.pubCopyFolderFromRunfiles("junit")
+      bazelDriver.pubCopyFolderFromRunfiles("specs2")
+      bazelDriver.pubCopyFolderFromRunfiles("third_party/plugin/src/main")
+      bazelDriver.add
       bazelDriver.writeWorkspaceFile(
-        workspaceName = "rules_scala_toolchain_test",
+        workspaceName = "io_bazel_rules_scala",
         repositories = List("io_bazel_rules_scala"),
         toolchains = List("@io_bazel_rules_scala//scala:scala_toolchain"))
       val cmd = bazelDriver.runBazel("build", "//:hello_world")
@@ -82,5 +92,11 @@ class ScalaToolchainTest extends SpecificationWithJUnit with BeforeAll {
     }
   }
 
-  override def beforeAll(): Unit = BazelBaseTestCase.setUpClass()
+  override def beforeAll(): Unit = {
+    val path  = Paths.get(sys.props("user.dir"))
+    println("============")
+    print(Files.list(path).iterator().asScala.map(_.toAbsolutePath.toString).mkString("\n"))
+    println("============")
+    BazelBaseTestCase.setUpClass()
+  }
 }

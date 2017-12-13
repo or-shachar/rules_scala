@@ -14,4 +14,10 @@ bazel_java_integration_test(
     srcs = [],
     test_class = "scala.test.toolchain.ScalaToolchainTest",
     runtime_deps = [":toolchain"],
+    data = [
+        "//scala:all_files",
+        "//specs2:all_files",
+        "//junit:all_files",
+        "//third_party/plugin/src/main:all_files",
+        ]
 )
