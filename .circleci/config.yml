@@ -4,7 +4,7 @@ version: 2.1
 executors:
   linux:
     docker:
-      - image: cimg/base:2020.01
+      - image: cimg/openjdk:11.0
   macos: # macos are not supported in free version of circle-ci
     macos:
       xcode: 10.1
