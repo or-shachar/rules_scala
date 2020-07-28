@@ -27,7 +27,7 @@ jobs:
       - checkout
       - run:
           name: << parameters.test_script >> (<< parameters.bazel_version >>)
-          command:|
+          command: |
             SYS_ENV_PLATFORM=linux
             if uname -a | grep Darwin; then
               SYS_ENV_PLATFORM=darwin
