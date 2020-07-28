@@ -35,8 +35,8 @@ jobs:
             rm /usr/local/bin/bazel
             # Set environment variables
             # Install Bazelisk
-            sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-${SYS_ENV_PLATFORM}-amd64
-            sudo chmod +x /usr/local/bin/bazel
+            wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-${SYS_ENV_PLATFORM}-amd64
+            chmod +x /usr/local/bin/bazel
             
             cat .bazelrc.travis >> .bazelrc #TODO: rename .travis to .ci
             # Execute bazel
