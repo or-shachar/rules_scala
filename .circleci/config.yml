@@ -1,4 +1,3 @@
-
 version: 2.1
 
 executors:
@@ -15,8 +14,6 @@ jobs:
       os:
         type: executor
       test_script:
-        type: string
-      bazel_version:
         type: string
     executor: << parameters.os >>
     environment:
@@ -49,6 +46,5 @@ workflows:
           matrix:
             parameters:
               os: [linux]
-              bazel_version: ["2.0.0", "3.4.1" ]
-              test_script: ["test_rules_scala", "test_reproducibility", "test_version"]
+              test_script: ["test_rules_scala", "test_reproducibility", "test_version", "lint", "test_examples"]
 
