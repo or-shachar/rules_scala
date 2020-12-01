@@ -19,7 +19,6 @@ jobs:
     environment:
       TEST_SCRIPT: << parameters.test_script >>
       XDG_CACHE_HOME: ~/xdg_cache
-      USE_BAZEL_VERSION: << parameters.bazel_version >>
     steps:
       - checkout
       - run:
