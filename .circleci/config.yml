@@ -22,7 +22,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: << parameters.test_script >> (<< parameters.bazel_version >>)
+          name: << parameters.test_script >>
           command: |
             SYS_ENV_PLATFORM=linux
             if uname -a | grep Darwin; then
